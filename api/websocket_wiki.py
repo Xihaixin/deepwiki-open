@@ -612,6 +612,20 @@ This file contains...
                     await websocket.send_text(error_msg)
                     # Close the WebSocket connection after sending the error message
                     await websocket.close()
+            elif request.provider == "dashscope":
+                try:
+                    logger.info("Making Dashscope API call")
+                    response = await model.acall(api_kwargs=api_kwargs, model_type=ModelType.LLM)
+                    # Handle streaming response from Dashscope
+                    async for chunk in response:
+                        if chunk is not None:
+                            await websocket.send_text(chunk)
+                    await websocket.close()
+                except Exception as e_dashscope:
+                    logger.error(f"Error with Dashscope API: {str(e_dashscope)}")
+                    error_msg = f"\nError with Dashscope API: {str(e_dashscope)}\n\nPlease check that you have set the DASHSCOPE_API_KEY environment variable with a valid API key."
+                    await websocket.send_text(error_msg)
+                    await websocket.close()
             else:
                 # Generate streaming response
                 response = model.generate_content(prompt, stream=True)
@@ -728,6 +742,27 @@ This file contains...
                         except Exception as e_fallback:
                             logger.error(f"Error with Azure AI API fallback: {str(e_fallback)}")
                             error_msg = f"\nError with Azure AI API fallback: {str(e_fallback)}\n\nPlease check that you have set the AZURE_OPENAI_API_KEY, AZURE_OPENAI_ENDPOINT, and AZURE_OPENAI_VERSION environment variables with valid values."
+                            await websocket.send_text(error_msg)
+                    elif request.provider == "dashscope":
+                        try:
+                            # Create new api_kwargs with the simplified prompt
+                            fallback_api_kwargs = model.convert_inputs_to_api_kwargs(
+                                input=simplified_prompt,
+                                model_kwargs=model_kwargs,
+                                model_type=ModelType.LLM
+                            )
+
+                            # Get the response using the simplified prompt
+                            logger.info("Making fallback Dashscope API call")
+                            fallback_response = await model.acall(api_kwargs=fallback_api_kwargs, model_type=ModelType.LLM)
+
+                            # Handle streaming fallback response from Dashscope
+                            async for chunk in fallback_response:
+                                if chunk is not None:
+                                    await websocket.send_text(chunk)
+                        except Exception as e_fallback:
+                            logger.error(f"Error with Dashscope API fallback: {str(e_fallback)}")
+                            error_msg = f"\nError with Dashscope API fallback: {str(e_fallback)}\n\nPlease check that you have set the DASHSCOPE_API_KEY environment variable with a valid API key."
                             await websocket.send_text(error_msg)
                     else:
                         # Initialize Google Generative AI model

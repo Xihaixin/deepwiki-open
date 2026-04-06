@@ -101,6 +101,14 @@ def handle_streaming_response(generator: Stream[ChatCompletionChunk]):
         yield parsed_content
 
 
+async def async_handle_streaming_response(generator):
+    """Handle the streaming response asynchronously."""
+    async for completion in generator:
+        log.debug(f"Raw chunk completion: {completion}")
+        parsed_content = parse_stream_response(completion)
+        yield parsed_content
+
+
 class DashscopeClient(ModelClient):
     """A component wrapper for the Dashscope (Alibaba Cloud) API client.
 

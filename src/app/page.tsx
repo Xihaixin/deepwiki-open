@@ -56,6 +56,7 @@ export default function Home() {
 
     // Navigate through the nested properties
     for (const k of keys) {
+      // typeof 运算符：用于检查变量是否已定义
       if (value && typeof value === 'object' && k in value) {
         value = value[k];
       } else {

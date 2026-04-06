@@ -7,7 +7,7 @@ import { locales } from '@/i18n';
 type Messages = Record<string, any>;
 type LanguageContextType = {
   language: string;
-  setLanguage: (lang: string) => void;
+  setLanguage: (lang: string) => void;  // 约束修改语言的函数必须接收字符串参数，且无返回值（规范函数调用方式）；
   messages: Messages;
   supportedLanguages: Record<string, string>;
 };
